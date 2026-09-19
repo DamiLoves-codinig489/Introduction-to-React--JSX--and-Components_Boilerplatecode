@@ -1,1 +1,15 @@
-// copy app.jsx code from the lesson plan and paste it here.
+import Navbar from './components/Navbar';
+
+export default function App() {
+
+    return (
+
+        <div>
+
+            <Navbar />
+
+        </div>
+
+    );
+
+}
