@@ -1,60 +1,53 @@
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { STAGE, AGE } from '../constants';
+// callAI stub — returns a scripted reply so the chat flow works now.
+// Replace this entire function in Lesson 5 with the real Groq API call.
+const callAI = useCallback(async (userMessage) => {
+    // Simulate a short network delay so the typing dots appear
+    await new Promise(r => setTimeout(r, 600));
+    if (userMessage.toLowerCase().includes('name'))
+        return "Great to meet you! How are you feeling today?";
+    if (userMessage.toLowerCase().includes('feeling') || userMessage.toLowerCase().includes('mood'))
+        return "Sounds good! Let's find the perfect movie for you.";
+    return "Here are some great movies I think you'll enjoy!";
+}, []);
 
-// createContext() creates a shared container any component can subscribe to
-const AppContext = createContext(null);
+// callAIWithSearch stub — returns a reply with no movie results yet.
+// Movie posters are added in Lesson 4 when OMDb is connected.
+const callAIWithSearch = useCallback(async (userMessage) => {
+    const reply = await callAI(userMessage);
+    return { reply, movieResults: [], hasAgeSwitchOffer: false };
+}, [callAI]);
 
-export function AppProvider({ children }) {
+// searchForStrip stub — returns empty array until Lesson 4 (OMDb API).
+const searchForStrip = useCallback(async () => [], []);
 
-    // ── Theme ──────────────────────────────────────────────────────────────
-    // Saved to localStorage so it persists across page reloads
-    const [theme, setTheme] = useState(() => localStorage.getItem('cv_theme') || 'dark');
-    useEffect(() => {
-        document.body.className = theme === 'light' ? 'light-mode' : '';
-        localStorage.setItem('cv_theme', theme);
-    }, [theme]);
+// switchAge — change age mode mid-chat
+const switchAge = useCallback((newAge) => {
+    setUserAge(newAge);
+    userAgeRef.current = newAge;
+    addMsg('bot', `Switched to ${{ [AGE.KIDS]: 'Kids mode', [AGE.TEEN]: 'Teen mode', [AGE.ADULT]: 'Adult mode' }[newAge]}!`);
+}, [addMsg]);
 
-    // ── User profile ───────────────────────────────────────────────────────
-    // These values are filled in by the UserPreferenceForm below
-    const [userName, setUserName] = useState('');
-    const [userAge, setUserAge] = useState(AGE.ADULT);
+// isRestricted stub — always returns false until Lesson 5 adds the filter
+const isRestricted = useCallback(() => false, []);
 
-    // ── Chat state (used in later lessons) ────────────────────────────────
-    const [stage, setStage] = useState(STAGE.NAME);
-    const [chatMsgs, setChatMsgs] = useState([]);
-    const [isBotTyping, setIsBotTyping] = useState(false);
+// ─────────────────────────── LESSON 3 END ────────────────────────────────
 
-    const msgCounter = useRef(0);
-    const newId = () => `msg-${++msgCounter.current}`;
 
-    // addMsg — append a new message to the visible chat
-    const addMsg = useCallback((role, content) =>
-        setChatMsgs(prev => [...prev, { id: newId(), role, content }]), []);
+const value = {
+    // Lesson 2
+    theme, setTheme,
+    userName, setUserName, userAge, setUserAge,
+    userMood, setUserMood, userCategories, setUserCategories,
+    userLanguage, setUserLanguage,
+    stage, setStage, chatMsgs, setChatMsgs, addMsg,
+    isBotTyping, setIsBotTyping, resetChat,
+    // Lesson 3
+    callAI, callAIWithSearch, searchForStrip, switchAge, isRestricted,
+};
 
-    // resetChat — wipe everything and restart onboarding from scratch
-    const resetChat = useCallback(() => {
-        setChatMsgs([]);
-        setUserName('');
-        setUserAge(AGE.ADULT);
-        setIsBotTyping(false);
-        setStage(STAGE.NAME);
-    }, []);
-
-    // ── Expose everything to child components via useApp() ─────────────────
-    const value = {
-        theme, setTheme,
-        userName, setUserName,
-        userAge, setUserAge,
-        stage, setStage,
-        chatMsgs, setChatMsgs, addMsg,
-        isBotTyping, setIsBotTyping,
-        resetChat,
-    };
-
-    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-// useApp — call this inside any component to access the shared state
 export function useApp() {
     const ctx = useContext(AppContext);
     if (!ctx) throw new Error('useApp must be inside <AppProvider>');

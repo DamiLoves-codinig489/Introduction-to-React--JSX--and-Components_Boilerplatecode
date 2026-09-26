@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import { AGE } from './constants';
+import ChatPage from './components/HeroSection';
 
 // ── UserPreferenceForm ─────────────────────────────────────────────────────
 // Demonstrates:
@@ -110,7 +111,7 @@ function AppInner() {
     return (
         <div className="app-root">
             <Navbar />               {/* Lesson 2 — now has theme toggle + reset */}
-            <UserPreferenceForm />   {/* Lesson 2 — name input + age picker       */}
+            <ChatPage />   {/* Lesson 2 — name input + age picker       */}
         </div>
     );
 }
