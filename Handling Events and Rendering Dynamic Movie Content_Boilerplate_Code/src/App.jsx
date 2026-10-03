@@ -1,142 +1,145 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { endpoints } from "./config";
 import Header from "./components/Header";
-import StepTracker from "./components/StepTracker";
-import OptionPicker from "./components/OptionPicker";
-import SelectionSummary from "./components/SelectionSummary";
-import RecommendationCard from "./components/RecommendationCard";
-import {
-  steps,
-  destinationOptions,
-  moodOptions,
-  budgetOptions,
-  ageOptions,
-  recommendationMap,
-} from "./data/travelData";
+import SearchBar from "./components/SearchBar";
+import CategoryStrip from "./components/CategoryStrip";
+import MealGrid from "./components/MealGrid";
+import RecipeModal from "./components/RecipeModal";
+import StatusBanner from "./components/StatusBanner";
 import "./App.css";
 
-const initialSelections = {
-  destination: "",
-  mood: "",
-  budget: "",
-  ageMode: "",
-};
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Something went wrong while contacting the recipe server.");
+  }
+  return response.json();
+}
 
 function App() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [selections, setSelections] = useState(initialSelections);
+  const [query, setQuery] = useState("Arrabiata");
+  const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("");
+  const [meals, setMeals] = useState([]);
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const stepConfig = [
-    {
-      key: "destination",
-      title: "Choose a Destination Style",
-      subtitle: "Pick the kind of travel experience you want first.",
-      options: destinationOptions,
-    },
-    {
-      key: "mood",
-      title: "Choose the Mood",
-      subtitle: "This helps shape the travel vibe and energy.",
-      options: moodOptions,
-    },
-    {
-      key: "budget",
-      title: "Choose Your Budget Type",
-      subtitle: "Select a spending style that matches your plan.",
-      options: budgetOptions,
-    },
-    {
-      key: "ageMode",
-      title: "Choose the Age Mode",
-      subtitle: "Recommendations adjust for kids, teens, or adults.",
-      options: ageOptions,
-    },
-  ];
+  const resultLabel = useMemo(() => {
+    if (activeCategory) return `Showing meals from ${activeCategory}`;
+    if (query.trim()) return `Search results for "${query}"`;
+    return "Popular recipe results";
+  }, [activeCategory, query]);
 
-  const activeStep = stepConfig[currentStep];
-
-  const handleSelect = (value) => {
-    setSelections((prev) => ({
-      ...prev,
-      [activeStep.key]: value,
-    }));
-
-    if (currentStep < stepConfig.length - 1) {
-      setCurrentStep((prev) => prev + 1);
+  const loadCategories = async () => {
+    try {
+      const data = await fetchJson(endpoints.categories);
+      setCategories(data.categories || []);
+    } catch {
+      setError("Could not load categories right now.");
     }
   };
 
-  const handleReset = () => {
-    setSelections(initialSelections);
-    setCurrentStep(0);
+  const searchMeals = async (searchValue = query) => {
+    setLoading(true);
+    setError("");
+    setActiveCategory("");
+
+    try {
+      const data = await fetchJson(endpoints.searchByName(searchValue));
+      setMeals(data.meals || []);
+    } catch {
+      setError("Unable to fetch recipes. Please try again.");
+      setMeals([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recommendation = useMemo(() => {
-    const { destination, mood, budget, ageMode } = selections;
+  const loadCategoryMeals = async (category) => {
+    setLoading(true);
+    setError("");
+    setActiveCategory(category);
 
-    if (!destination || !mood || !budget || !ageMode) {
-      return null;
+    try {
+      const data = await fetchJson(endpoints.filterByCategory(category));
+      setMeals(data.meals || []);
+    } catch {
+      setError("Could not fetch category meals.");
+      setMeals([]);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const exactMatch =
-      recommendationMap?.[ageMode]?.[destination]?.[mood]?.[budget];
+  const openMeal = async (id) => {
+    setLoading(true);
+    setError("");
 
-    if (exactMatch) {
-      return exactMatch;
+    try {
+      const data = await fetchJson(endpoints.lookupById(id));
+      setSelectedMeal(data.meals?.[0] || null);
+    } catch {
+      setError("Could not open recipe details.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return {
-      title: "Custom Travel Blend",
-      description:
-        "Your travel style is unique. This mix suggests a flexible itinerary with experiences matched to your chosen vibe, budget, and age mode.",
-      tags: [destination, mood, budget],
-    };
-  }, [selections]);
+  const loadRandomMeal = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await fetchJson(endpoints.randomMeal);
+      const meal = data.meals?.[0] || null;
+      setSelectedMeal(meal);
+      if (meal) {
+        setMeals([meal]);
+        setActiveCategory("");
+        setQuery(meal.strMeal);
+      }
+    } catch {
+      setError("Could not load a surprise recipe.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+    searchMeals("Arrabiata");
+  }, []);
 
   return (
     <div className="page">
-      <Header />
+      <Header onRandom={loadRandomMeal} />
 
-      <StepTracker steps={steps} currentStep={currentStep} />
+      <SearchBar
+        query={query}
+        onQueryChange={setQuery}
+        onSearch={() => searchMeals(query)}
+      />
 
-      <div className="main-layout">
-        <div className="left-column">
-          <OptionPicker
-            title={activeStep.title}
-            subtitle={activeStep.subtitle}
-            options={activeStep.options}
-            selectedValue={selections[activeStep.key]}
-            onSelect={handleSelect}
-          />
+      <CategoryStrip
+        categories={categories}
+        activeCategory={activeCategory}
+        onSelect={loadCategoryMeals}
+      />
 
-          <div className="nav-panel panel">
-            <h2>Flow Controls</h2>
-            <p className="panel-subtitle">
-              Use these controls to move through the guided setup.
-            </p>
-            <div className="nav-actions">
-              <button
-                className="secondary-btn"
-                onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}
-                disabled={currentStep === 0}
-              >
-                Previous Step
-              </button>
-              <button
-                className="primary-btn"
-                onClick={() => setCurrentStep((prev) => Math.min(prev + 1, stepConfig.length - 1))}
-                disabled={currentStep === stepConfig.length - 1}
-              >
-                Next Step
-              </button>
-            </div>
-          </div>
+      <div className="results-head">
+        <div>
+          <p className="eyebrow accent">Live results</p>
+          <h2>{resultLabel}</h2>
         </div>
-
-        <div className="right-column">
-          <SelectionSummary selections={selections} onReset={handleReset} />
-          <RecommendationCard recommendation={recommendation} />
-        </div>
+        <span className="count-pill">{meals.length} recipes</span>
       </div>
+
+      <StatusBanner loading={loading} error={error} />
+
+      {!loading && !error && <MealGrid meals={meals} onOpen={openMeal} />}
+
+      <RecipeModal meal={selectedMeal} onClose={() => setSelectedMeal(null)} />
     </div>
   );
 }

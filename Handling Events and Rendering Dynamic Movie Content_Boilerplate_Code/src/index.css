@@ -4,9 +4,9 @@
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif; 
-  background: linear-gradient(135deg, #eef8ff, #f6fffc, #fffaf1);
-  color: #17324d;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #fff5ef, #fffdf9, #f7fbff);
+  color: #1f2937;
 }
 
 h1,
@@ -16,6 +16,11 @@ p {
   margin-top: 0;
 }
 
-button {
-  font-family: inherit;
+img {
+  display: block;
+}
+
+button,
+input {
+  font: inherit;
 }

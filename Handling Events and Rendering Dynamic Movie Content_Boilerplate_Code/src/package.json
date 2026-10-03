@@ -1,5 +1,5 @@
-{
-    "name": "travel-experience-customiser",
+pip install openaia{
+    "name": "recipe-explorer-mealdb",
     "private": true,
     "version": "0.0.0",
     "type": "module",
