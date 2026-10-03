@@ -1,8 +1,16 @@
+import SearchModal from './SearchModal';
+const [showSearch, setShowSearch] = useState(false);
+
+{ showSearch && <SearchModal onClose={() => setShowSearch(false)} /> }
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { parseAIText } from '../utils/textParser';
 import { STAGE, AGE, CATEGORIES_BY_AGE, MOODS_BY_AGE, LANGUAGES } from '../constants';
-
+<button className="search-icon-btn" onClick={() => setShowSearch(true)}
+    aria-label="Search movies" title="Search movies">
+    <i className="bi bi-search" />
+</button>
+{ showSearch && <SearchModal onClose={() => setShowSearch(false)} /> }
 function TypingDots() {
     return (
         <div className="chat-row bot-row">

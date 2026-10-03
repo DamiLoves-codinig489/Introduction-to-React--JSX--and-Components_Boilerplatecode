@@ -1,3 +1,28 @@
+import { omdbSearch, omdbDetails } from '../utils/api';
+
+const searchForStrip = useCallback(async (query) => {
+  if (!query.trim()) return [];
+  try { return (await omdbSearch(query)).slice(0, 12); }
+  catch { return []; }
+}, []);
+
+searchForStrip,
+  selectedMovie, showModal, setShowModal, openMovie,
+// openMovie — fetch full details then open MovieModal
+const [selectedMovie, setSelectedMovie] = useState(null);
+const [showModal, setShowModal] = useState(false);
+
+resetModalRef.current = () => setShowModal(false);
+
+const openMovie = useCallback((movie) => {
+  setSelectedMovie(movie);
+  setShowModal(true);
+  if (movie?.imdbID) {
+    omdbDetails(movie.imdbID)
+      .then(full => { if (full) setSelectedMovie(full); })
+      .catch(() => { });
+  }
+}, []);
 // callAI stub — returns a scripted reply so the chat flow works now.
 // Replace this entire function in Lesson 5 with the real Groq API call.
 const callAI = useCallback(async (userMessage) => {
