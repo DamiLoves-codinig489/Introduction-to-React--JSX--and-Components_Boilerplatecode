@@ -1,25 +1,29 @@
 import Header from "./components/Header";
-import StudentForm from "./components/StudentForm";
-import ProfileCard from "./components/ProfileCard";
-import SummaryPanel from "./components/SummaryPanel";
+import Card from "./components/Card";
+import Footer from "./components/Footer";
 import "./App.css";
 
 function App() {
   return (
     <div className="page">
-      <Header
-        title="Student Profile Dashboard"
-        subtitle="Manage a student profile using props, state, controlled inputs, constants, and React Context."
-      />
+      <Header />
 
-      <div className="layout">
-        <StudentForm />
-
-        <div className="right-panel">
-          <ProfileCard />
-          <SummaryPanel />
-        </div>
+      <div className="card-grid">
+        <Card
+          title="Favorite Game"
+          description="I love Minecraft because I can build houses, explore new worlds, and turn my imagination into something real."
+        />
+        <Card
+          title="Favorite Food"
+          description="Pizza is my favorite food because it is cheesy, delicious, and comes in so many fun flavors."
+        />
+        <Card
+          title="Favorite Hobby"
+          description="I enjoy coding because I can create projects, solve problems, and learn something exciting every time."
+        />
       </div>
+
+      <Footer />
     </div>
   );
 }
